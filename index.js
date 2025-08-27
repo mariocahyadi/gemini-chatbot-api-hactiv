@@ -52,6 +52,37 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// GENERATE TEXT
+app.post('/generate-text', async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        const resp = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: prompt
+        });
+        res.json({ result: extractText(resp)});
+    } catch (err) {
+        res.status(500).json({ error: err.message});
+    }
+});
+
+app.post('/generate-from-image', upload.single('image'), async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        const imageBase64 = req.file.buffer.toString('base64');
+        const resp = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: [
+                { text: prompt },
+                { inlineData: { mimeType: req.file.mimetype, data: imageBase64 } }
+            ]
+        });
+        res.json({ result: extractText(resp) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+})
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
