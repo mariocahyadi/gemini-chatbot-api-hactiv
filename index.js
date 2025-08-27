@@ -83,6 +83,40 @@ app.post('/generate-from-image', upload.single('image'), async (req, res) => {
     }
 })
 
+app.post('/generate-from-document', upload.single('document'), async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        const documentBase64 = req.file.buffer.toString('base64');
+        const resp = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: [
+                { text: prompt },
+                { inlineData: { mimeType: req.file.mimetype, data: documentBase64 } }
+            ]
+        });
+        res.json({ result: extractText(resp) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+})
+
+app.post('/generate-from-audio', upload.single('audio'), async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        const audioBase64 = req.file.buffer.toString('base64');
+        const resp = await ai.models.generateContent({
+            model: GEMINI_MODEL,
+            contents: [
+                { text: prompt || 'Transcript audio berikut: ' },
+                { inlineData: { mimeType: req.file.mimetype, data: audioBase64 } }
+            ]
+        });
+        res.json({ result: extractText(resp) });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+})
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
